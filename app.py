@@ -10,6 +10,8 @@ currentFilename: str = None
 
 
 def loadFile(filename):
+    if filename[0] == "/":
+        filename = filename[1:]
     global currentFilename
     currentFilename = filename
     print("Done")
@@ -24,7 +26,7 @@ def convertFile(fmt):
     wnd.repaint()
     filename = currentFilename
     to = os.path.splitext(filename)[0] + "." + fmt
-    os.system(f"pandoc -t html '{filename}' -o '{to}'")
+    os.system(f'pandoc "{filename}" -o "{to}"')
     wnd.statusBar().showMessage("转换成功: " + to)
 
 
@@ -54,6 +56,7 @@ layout.addWidget(label)
 layout.addLayout(buttons)
 payload.setLayout(layout)
 wnd.setCentralWidget(payload)
+wnd.setWindowTitle("麦多")
 wnd.show()
 font = app.font()
 font.setPointSize(font.pointSize() * 2)
