@@ -1,8 +1,8 @@
+import os
 import os.path
 
-import pypandoc
-from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 label: QLabel
 wnd: QMainWindow
@@ -24,9 +24,7 @@ def convertFile(fmt):
     wnd.repaint()
     filename = currentFilename
     to = os.path.splitext(filename)[0] + "." + fmt
-    pypandoc.convert_file(filename, fmt, outputfile=to)
-    import time
-    time.sleep(3)
+    os.system(f"pandoc -t html '{filename}' -o '{to}'")
     wnd.statusBar().showMessage("转换成功: " + to)
 
 
