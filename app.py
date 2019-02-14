@@ -1,5 +1,7 @@
 import os
 import os.path
+import platform
+from subprocess import Popen, PIPE
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -10,11 +12,12 @@ currentFilename: str = None
 
 
 def loadFile(filename):
-    if filename[0] == "/":
+    if filename is None:
+        return
+    if platform == "Windows":
         filename = filename[1:]
     global currentFilename
     currentFilename = filename
-    print("Done")
     label.setText("当前文件: " + filename)
     wnd.statusBar().showMessage("文件载入成功: " + filename)
 
@@ -23,11 +26,16 @@ def convertFile(fmt):
     if currentFilename is None:
         return
     wnd.statusBar().showMessage("转换中...")
-    wnd.repaint()
-    filename = currentFilename
-    to = os.path.splitext(filename)[0] + "." + fmt
-    os.system(f'pandoc "{filename}" -o "{to}"')
-    wnd.statusBar().showMessage("转换成功: " + to)
+    fromFilename = currentFilename
+    toFilename = os.path.splitext(fromFilename)[0] + "." + fmt
+    args = ["pandoc", fromFilename]
+    if fmt == "pdf":
+        args.extend(["--pdf-engine", "wkhtmltopdf"])
+    args.extend(["-o", toFilename])
+    process = Popen(args=args, stdout=PIPE, stderr=PIPE)
+    _, err = process.communicate()
+    code = process.returncode
+    wnd.statusBar().showMessage(("转换成功: " + toFilename) if code == 0 else "转换失败: " + err.decode())
 
 
 app = QApplication([])
