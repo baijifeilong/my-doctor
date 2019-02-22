@@ -1,7 +1,7 @@
 import os
 import os.path
 import platform
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STARTUPINFO, STARTF_USESHOWWINDOW
 from threading import Thread
 
 from PyQt5.QtCore import *
@@ -16,7 +16,7 @@ dlg: QProgressDialog = None
 def loadFile(filename):
     if filename is None:
         return
-    if platform == "Windows":
+    if platform.system() == "Windows":
         filename = filename[1:]
     global currentFilename
     currentFilename = filename
@@ -39,7 +39,9 @@ class Converter(QThread):
         if fmt == "pdf":
             args.extend(["--pdf-engine", "wkhtmltopdf"])
         args.extend(["-o", toFilename])
-        process = Popen(args=args, stdout=PIPE, stderr=PIPE)
+        startupinfo = STARTUPINFO()
+        startupinfo.dwFlags |= STARTF_USESHOWWINDOW
+        process = Popen(args=args, stdin=PIPE, stdout=PIPE, stderr=PIPE, startupinfo=startupinfo)
         err = process.communicate()[1].decode()
         code = process.returncode
         wnd.statusBar().showMessage(("转换成功: " + toFilename) if code == 0 else "转换失败: " + err)
@@ -50,7 +52,7 @@ def convertFile(fmt):
     if currentFilename is None:
         return
     global dlg
-    dlg = QProgressDialog()
+    dlg = QProgressDialog(wnd)
     dlg.setWindowTitle("转换中...")
     dlg.setMaximum(0)
     dlg.setCancelButton(None)
@@ -75,14 +77,14 @@ wnd.statusBar().showMessage("就绪.")
 payload = QWidget()
 label = QLabel("请拖入文件.转换后会自动覆盖同名文件,请谨慎使用")
 
-buttons = QHBoxLayout()
+buttons = QGridLayout()
 mapper = QSignalMapper()
-for k, v in dict(docx="Word", pdf="PDF", pptx="PowerPoint").items():
+for idx, (k, v) in enumerate(dict(docx="Word", pdf="PDF", pptx="PowerPoint", html="HTML", mobi="Mobi", epub="EPUB").items()):
     button = QPushButton(v)
     button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     mapper.setMapping(button, k)
     button.clicked.connect(mapper.map)
-    buttons.addWidget(button)
+    buttons.addWidget(button, idx / 3 + 1, idx % 3 + 1)
 mapper.mapped["QString"].connect(convertFile)
 
 layout = QVBoxLayout()
