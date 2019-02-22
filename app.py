@@ -1,7 +1,7 @@
 import os
 import os.path
 import platform
-from subprocess import Popen, PIPE, STARTUPINFO, STARTF_USESHOWWINDOW
+from subprocess import Popen, PIPE
 from threading import Thread
 
 from PyQt5.QtCore import *
@@ -39,8 +39,12 @@ class Converter(QThread):
         if fmt == "pdf":
             args.extend(["--pdf-engine", "wkhtmltopdf"])
         args.extend(["-o", toFilename])
-        startupinfo = STARTUPINFO()
-        startupinfo.dwFlags |= STARTF_USESHOWWINDOW
+        try:
+            from subprocess import STARTUPINFO, STARTF_USESHOWWINDOW
+            startupinfo = STARTUPINFO()
+            startupinfo.dwFlags |= STARTF_USESHOWWINDOW
+        except:
+            startupinfo = None
         process = Popen(args=args, stdin=PIPE, stdout=PIPE, stderr=PIPE, startupinfo=startupinfo)
         err = process.communicate()[1].decode()
         code = process.returncode
